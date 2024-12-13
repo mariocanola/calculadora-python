@@ -51,7 +51,7 @@ class ModeloCalculadora:
 
     def agregar_resultado(self, resultado):
         try:
-            consulta = "INSERT INTO resultado (resultado) VALUES (%s)"
+            consulta = "INSERT INTO resultado (resultados) VALUES (%s)"
             self.cursor.execute(consulta, (resultado,))
             self.conn.commit()
             return self.cursor.lastrowid
@@ -70,9 +70,9 @@ class ModeloCalculadora:
     def obtener_historial(self):
         try:
             consulta = """
-            SELECT op.id, o.numero1, o.operador, o.numero2, r.resultado
+            SELECT op.id, o.numero1, o.operador, o.numero2, r.resultados
             FROM operacion_resultado AS op
-            JOIN operacion AS o ON op.id_operador = o.id
+            JOIN operacion AS o ON op.id_operacion = o.id
             JOIN resultado AS r ON op.id_resultado = r.id
             ORDER BY op.id DESC
             """
