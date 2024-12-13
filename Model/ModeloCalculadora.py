@@ -16,53 +16,48 @@ class ModeloCalculadora:
     def crear_tablas(self):
         try:
             self.cursor.execute("""
-            CREATE TABLE IF NOT EXISTS operacion (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                numero1 FLOAT,
-                operador CHAR(1),
-                numero2 FLOAT
+            CREATE TABLE IF NOT EXISTS operadores (
+                id_operador INT AUTO_INCREMENT PRIMARY KEY,
+                simbolo VARCHAR(5) NOT NULL
             )""")
             self.cursor.execute("""
-            CREATE TABLE IF NOT EXISTS resultado (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                resultado FLOAT
+            CREATE TABLE IF NOT EXISTS operaciones (
+                id_operacion INT AUTO_INCREMENT PRIMARY KEY,
+                op1 INT NOT NULL,
+                op2 INT NOT NULL,
+                id_operador INT NOT NULL,
+                resultado INT NOT NULL,
+                FOREIGN KEY (id_operador) REFERENCES operadores(id_operador)
             )""")
-            self.cursor.execute("""
-            CREATE TABLE IF NOT EXISTS operacion_resultado (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                id_operador INT,
-                id_resultado INT,
-                FOREIGN KEY (id_operacion) REFERENCES operacion(id),
-                FOREIGN KEY (id_resultado) REFERENCES resultado(id)
-            )""")
+            
             self.conn.commit()
         except mysql.connector.Error as e:
             print(f"Error al crear tablas: {e}")
 
-    def agregar_operacion(self, numero1, operador, numero2):
+    def agregar_operacion(self, op1, id_operador, op2, resultado):
         try:
-            consulta = "INSERT INTO operacion (numero1, operador, numero2) VALUES (%s, %s, %s)"
-            self.cursor.execute(consulta, (numero1, operador, numero2))
+            consulta = "INSERT INTO operaciones (op1, id_operador, op2, resultado) VALUES (%s, %s, %s, %s)"
+            self.cursor.execute(consulta, (op1, id_operador, op2, resultado))
             self.conn.commit()
             return self.cursor.lastrowid
         except mysql.connector.Error as e:
             print(f"Error al agregar la operación: {e}")
-            return None
+            return None #aqui debemos corregir 
 
-    def agregar_resultado(self, resultado):
+    def agregar_resultado(self, operaciones):
         try:
-            consulta = "INSERT INTO resultado (resultados) VALUES (%s)"
-            self.cursor.execute(consulta, (resultado,))
+            consulta = "INSERT INTO operaciones (op1, id_operador, op2, resultado) VALUES (%s, %s, %s, %s)"
+            self.cursor.execute(consulta, (operaciones,))
             self.conn.commit()
             return self.cursor.lastrowid
         except mysql.connector.Error as e:
             print(f"Error al agregar el resultado: {e}")
-            return None
+            return None #posiblemente esto esta haciendo lo mismo que la funcion anterior agregar_operacion
 
-    def agregar_al_historial(self, id_operador, id_resultado):
+    def agregar_al_historial(self, op1, id_operador, op2, resultado):
         try:
-            consulta = "INSERT INTO operacion_resultado (id_operador, id_resultado) VALUES (%s, %s)"
-            self.cursor.execute(consulta, (id_operador, id_resultado))
+            consulta = "INSERT INTO operaciones (op1 ,id_operador, op2, resultado) VALUES (%s, %s, %s, %s)"
+            self.cursor.execute(consulta, (op1, id_operador, op2, resultado))
             self.conn.commit()
         except mysql.connector.Error as e:
             print(f"Error al agregar al historial: {e}")
@@ -70,11 +65,10 @@ class ModeloCalculadora:
     def obtener_historial(self):
         try:
             consulta = """
-            SELECT op.id, o.numero1, o.operador, o.numero2, r.resultados
-            FROM operacion_resultado AS op
-            JOIN operacion AS o ON op.id_operacion = o.id
-            JOIN resultado AS r ON op.id_resultado = r.id
-            ORDER BY op.id DESC
+            SELECT op.id_operacion, op.op1, or.id_operador, op.op2, op.resultado
+            FROM operaciones AS op
+            JOIN operadores AS or ON or.id_operador = op.id_operador
+            ORDER BY op.id_operador DESC
             """
             self.cursor.execute(consulta)
             return self.cursor.fetchall()
